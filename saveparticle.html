@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spad fight</title>
+
+  </head>
+<body >
+  <style>
+body{
+    margin:0;
+  }
+  </style>
+ <canvas>
+  
+ </canvas>
+
+<script>
+  const canvas = document.querySelector('canvas')
+const c = canvas.getContext("2d")
+
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+
+
+class Player{
+  constructor(){
+    
+
+    this.velocity = {
+      x:0,
+      y:0
+    }
+     this.rotation = 0.15
+    const image = new Image()
+    image.src = "img/player.png"
+    image.onload = () =>{
+       this.image = image
+       this.width = 30
+       this.height = 30
+    this.position = {
+      x:canvas.width/2,
+      y:canvas.height - this.height 
+    }
+    }
+  }
+  //drawing the player in the canvas
+  draw() {
+    c.save()
+
+    c.translate(player.position.x + player.width/2, 
+    player.position.y + player.height / 2)//to move our canvas
+    
+     c.restore(this.rotation)
+    
+    if(this.image)
+   
+  c.drawImage(
+   this.image, 
+   this.position.x, 
+   this.position.y,
+   this.width, 
+   this.height
+   )
+   
+}
+
+update() {
+  if(this.image){
+  this.draw()
+  this.position.x += this.velocity.x
+      }
+    }
+ }
+
+ class Projectile{
+  constructor({position, velocity}) {
+    this.position = position 
+    this.velocity = velocity
+
+    this.radius = 4
+  }
+
+  draw() {
+  c.beginPath()
+  c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+        c.fillStyle = 'red'
+        c.fill()
+        c.closePath()
+  }
+  update(){
+    this.draw()
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
+  }
+
+ }
+
+//enemy projectile
+
+ class EnemyProjectile{
+  constructor({position, velocity}) {
+    this.position = position 
+    this.velocity = velocity
+
+    this.width =3
+    this.height = 10
+
+  } 
+
+  draw() {
+    c.fillStyle = 'white'//color of the projectile
+  c.fillRect(this.position.x, this.position.y, this.width, this.height)
+  
+  }
+  update(){
+    this.draw()
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
+  }
+
+ }
+
+
+ //enemy class
+class Enemy{
+  constructor({position}){
+    
+
+    this.velocity = {
+      x:0,
+      y:0
+    }
+     this.rotation = 0.15
+    const image = new Image()
+    image.src = "img/ufo.png"
+    image.onload = () =>{
+      //  const scale = 1
+       this.image = image
+       this.width = 30
+       this.height = 30
+    this.position = {
+      x:position.x,
+      y:position.y
+    }
+    }
+  }
+  //drawing the enemy in the canvas
+  draw() {
+   
+  c.drawImage(
+   this.image, 
+   this.position.x, 
+   this.position.y,
+   this.width, 
+   this.height
+   )
+   
+}
+
+update({velocity}) {
+  if(this.image){
+  this.draw()
+  this.position.x += velocity.x
+  this.position.y += velocity.y
+      }
+    }
+
+    shoot (EnemyProjectiles) {
+      
+      EnemyProjectiles.push(new EnemyProjectile({
+       position: {
+         x: this.position.x + this.width/2,
+        y: this.position.y + this.height
+       },
+
+      velocity: {
+        x:0,
+        y:5//pixels per second
+      }
+
+      }))
+      
+    }
+ }
+
+//Grid class
+class Grid{
+  constructor(){
+    this.position={
+      x:0,
+      y:0
+    },
+    this.velocity = {
+      x:2,
+      y:0
+    }
+    this.enemies = []//render inavader for each group 
+     
+const cols =Math.floor(Math.random() * 10 + 5)
+const rows =Math.floor(Math.random() * 5 + 2)
+this.width = cols * 40//gives the full width of the actual grid {each enemy has a width of 40}
+
+    for (let x=0; x<cols; x++) {
+      for (let y=0; y < rows; y++) {
+          this.enemies.push(new Enemy({position: {
+            x:x * 40,
+            y:y * 40
+          }}))}                                                                                                                
+    }
+  console.log(this.enemies)
+  }
+  update() {
+    //move the enemies side to side
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
+    
+    //set the velocity for each frame as 0 
+    //so the enemy does no move straight towards the player
+    this.velocity.y = 0
+
+    if (this.position.x + this.width >= canvas.width || this.position.x <= 0)
+    //The if statement sets the boundary of the canvas 
+    // so the enemies bounce back to the field of battle
+     {
+           this.velocity.x = -this.velocity.x
+           
+            this.velocity.y = 40//set the enemies to approach the player at a frame of 40
+     }
+ }
+}
+
+//Array stores
+const player = new Player()
+const projectiles = []
+const grids = []//store grids and render enmies in the grids
+const enemyProjectiles = []
+
+
+
+const keys = {
+  a:{
+    pressed:false
+  },
+  d:{
+    // this.position.y += this.velocity.y
+    pressed:false
+  },
+  space:{
+    pressed:false
+  },
+}
+
+let frames = 0
+//new enemies appear randomly after a given interval 
+let random_intervals = Math.floor((Math.random() * 500)+500 )
+
+
+
+
+//animating the player and  enemy
+function animate(){
+  requestAnimationFrame(animate)
+
+  c.fillStyle = 'black'//background color
+  c.fillRect(0,0, canvas.width, canvas.height)
+
+  
+  player.update()
+
+  
+
+  enemyProjectiles.forEach((enemyProjectile, index) => {
+    
+    if (enemyProjectile.position.y + enemyProjectile.height >= canvas.height)
+    {
+      setTimeout(() =>{
+
+          enemyProjectiles.splice(index, 1)
+          
+             },0)
+    } else {
+         enemyProjectile.update() 
+    }
+
+
+   
+     
+
+  })
+
+
+  //projectiles hits the enemy
+projectiles.forEach(projectile => {
+if(projectile.position.y + projectile.radiius <= 0){
+  setTimeout(() =>{
+projectiles.splice(index, 1)
+  },0)
+  
+}else {
+  projectile.update()
+}
+})
+
+grids.forEach((grid, gridIndex) => {
+  grid.update()
+
+ if (frames % 100 === 0 && grid.enemies.length > 0){
+
+        grid.enemies[Math.floor(Math.random() * grid.enemies.length)].shoot ( enemyProjectiles )
+ 
+ }
+
+  grid.enemies.forEach((enemy, i) => {
+    enemy.update({velocity: grid.velocity})
+//for each enemy loop through each projectile
+    projectiles.forEach( (projectile, j) => {
+
+       if (projectile.position.y - projectile.radius <= enemy.position.y + enemy.height
+           && projectile.position.x + projectile.radius >= enemy.position.x  //remove an enemy if projectile hits the left side of the enemy
+           && projectile.position.x - projectile.radius <= enemy.position.x + enemy.width  //remove an enemy if projectile hits the right side of the enemy
+           && projectile.position.y + projectile.radius >= enemy.position.y  //remove an enemy if bottom of projectile is greater than bottom of enemy
+      ) {
+
+        setTimeout(() => {
+          
+          const enemyFound = grid.enemies.find (enemy2 =>
+            enemy2 === enemy
+          )
+          const projectileFound = projectiles.find(
+            projectile2 => projectile2 === projectile
+          )
+         
+         if (enemyFound && projectileFound) {
+           grid.enemies.splice(i, 1)
+          projectiles.splice(j, 1)
+         }
+         
+         if (grid.enemies.legth > 0) {
+          const firstEnemy = grid.enemies[0]
+          const lastEnemy = grid.enemies[-1]
+
+          grid.width = lastEnemy.position.x - firstEnemy.position.x + lastEnemy.width
+         
+          
+
+        }
+
+        }, 0)
+      }
+
+
+    }
+   )
+  })
+})
+
+
+  if(keys.a.pressed &&  player.position.x >= 0){
+    player.velocity.x =   -5
+    player.rotation = -.15
+  } else if(keys.d.pressed && player.position.x + player.width <= canvas.width){
+    player.velocity.x = 5
+  } else {
+     player.velocity.x = 0
+  }
+
+//spawning new enemies
+  if (frames % random_intervals == 0) {
+            grids.push (new Grid())
+  //creating new intervals 
+            random_intervals = Math.floor((Math.random() * 500)+500 )
+  //set frames to zero each time we call a new interval
+            frames = 0
+
+  }
+
+  
+  frames++
+}
+
+animate()
+
+addEventListener('keydown', ({key})=>{
+  switch(key) {
+    case 'a':
+      
+     keys.a.pressed = true
+      break
+    case 'd':
+      
+      keys.d.pressed = true
+      break
+    case ' ':
+     
+      projectiles.push(
+        new Projectile({
+                    position: {
+                      x:player.position.x + player.width/2,
+                      y:player.position.y
+                    },
+                    velocity: {
+                       x:0,
+                       y:-10
+                    }
+                     }))
+      
+      break
+  }
+})
+
+addEventListener('keyup', ({key})=>{
+  switch(key) {
+    case 'a':
+     
+     keys.a.pressed = false
+      break
+    case 'd':
+      
+      keys.d.pressed = false
+      break
+    case ' ':
+      
+      break
+  }
+})
+</script>
+</body>
+</html> 
